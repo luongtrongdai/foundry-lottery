@@ -12,13 +12,12 @@ contract RaffleScript is Script {
 
     function run() public {
         HelperConfig helperConfig = new HelperConfig();
-        (address vrfConsumer, bytes32 gasLane, uint256 subscriptionId, bool enableNativePament) = 
+        (address vrfConsumer, bytes32 gasLane, uint256 subscriptionId, bool enableNativePament) =
             helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
 
-        raffle = new Raffle(0.02 ether, 10, vrfConsumer,
-            gasLane, subscriptionId, 400000, enableNativePament);
+        raffle = new Raffle(0.02 ether, 10, vrfConsumer, gasLane, subscriptionId, 400000, enableNativePament);
 
         vm.stopBroadcast();
     }

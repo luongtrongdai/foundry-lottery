@@ -9,7 +9,6 @@ import {RaffleScript} from "script/Raffle.s.sol";
 
 // 3. Interfaces, Libraries, Contracts
 
-
 contract RaffleTest is Test {
     Raffle public raffle;
     address USER = makeAddr("user");
@@ -19,7 +18,7 @@ contract RaffleTest is Test {
     function setUp() external {
         RaffleScript raffleScript = new RaffleScript();
         raffleScript.run();
-        
+
         raffle = raffleScript.raffle();
         vm.deal(USER, STARTING_BALANCE);
     }
@@ -29,19 +28,19 @@ contract RaffleTest is Test {
         raffle.enterRaffle();
 
         vm.expectRevert();
-        raffle.enterRaffle{value: 0.01 ether }();
+        raffle.enterRaffle{value: 0.01 ether}();
     }
 
     function test_EnterRaffleSuccess() public {
         vm.expectEmit(address(raffle));
         emit Raffle.RaffleEnter(address(this));
 
-        raffle.enterRaffle{value: 0.02 ether }();
+        raffle.enterRaffle{value: 0.02 ether}();
         assertEq(raffle.getPlayer(0), address(this));
     }
 
     function test_CheckUpkeepTimeLessThanInterval() public view {
-        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         assertEq(upkeepNeeded, false);
     }
@@ -50,7 +49,7 @@ contract RaffleTest is Test {
         raffle.enterRaffle{value: 0.02 ether}();
 
         vm.warp(20);
-        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         assertEq(upkeepNeeded, true);
     }
