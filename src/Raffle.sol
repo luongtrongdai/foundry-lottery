@@ -3,14 +3,17 @@ pragma solidity 0.8.26;
 
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
-contract Raffle is VRFConsumerBaseV2Plus {
+
+contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     error Raffle__SendMoreToEnterRaffle();
     error Raffle__WaitMoreTime();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
     error Raffle__RaffleNotCaculating();
+     error Raffle__UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, RaffleState raffleState);
 
     /* Type declarations */
     enum RaffleState {
@@ -70,12 +73,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
         require(msg.value >= i_entranceFee, Raffle__SendMoreToEnterRaffle());
 
         s_players.push(payable(msg.sender));
-        s_lastTimeStamp = block.timestamp;
 
         emit RaffleEnter(msg.sender);
     }
 
-    function pickWinner() external onlyOpenRaffle {
+    function pickWinner() internal onlyOpenRaffle {
         require(block.timestamp - s_lastTimeStamp >= i_interval, Raffle__WaitMoreTime());
 
         s_raffleState = RaffleState.CALCULATING;
@@ -109,13 +111,35 @@ contract Raffle is VRFConsumerBaseV2Plus {
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
         uint256 totalEntranceFee = i_entranceFee * totalPlayers;
-        
+        uint256 currentBalance = address(this).balance;
+
         resetRaffle();
-        (bool success, ) = recentWinner.call{value: address(this).balance - totalEntranceFee}("");
+
+        (bool success, ) = recentWinner.call{value: currentBalance - totalEntranceFee}("");
         require(success, Raffle__TransferFailed());
 
         (bool transferOwnerSuccess, ) = s_owner.call{value: totalEntranceFee}("");
         require(transferOwnerSuccess, Raffle__TransferFailed());
+        
+    }
+
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view override returns (bool upkeepNeeded, bytes memory /* performData */) {
+        upkeepNeeded = block.timestamp - s_lastTimeStamp >= i_interval;
+        if (upkeepNeeded) {
+            upkeepNeeded = s_raffleState == RaffleState.OPEN;
+        }
+        if (upkeepNeeded) {
+            upkeepNeeded = s_players.length > 0;
+        }
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external override {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        require(upkeepNeeded, Raffle__UpkeepNotNeeded(address(this).balance, s_players.length, s_raffleState));
+
+        pickWinner();
     }
 
     function resetRaffle() private {
