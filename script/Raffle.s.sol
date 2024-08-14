@@ -17,7 +17,7 @@ contract RaffleScript is Script {
 
         vm.startBroadcast();
 
-        raffle = new Raffle(1 gwei, 300, vrfConsumer,
+        raffle = new Raffle(0.02 ether, 10, vrfConsumer,
             gasLane, subscriptionId, 400000, enableNativePament);
 
         vm.stopBroadcast();
