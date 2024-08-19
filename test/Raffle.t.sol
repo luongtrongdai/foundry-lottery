@@ -69,6 +69,6 @@ contract RaffleTest is Test {
         vm.warp(20);
         raffle.performUpkeep("");
 
-        console.log(raffle.getPlayer(1));
+        assert(raffle.getRaffleState() == Raffle.RaffleState.CALCULATING);
     }
 }

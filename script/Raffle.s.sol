@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import {Script, console} from "forge-std/Script.sol";
 import {Raffle} from "src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
+import {AddConsumer, CreateSubscription, FundSubscription} from "./Interaction.s.sol";
 
 contract RaffleScript is Script {
     Raffle public raffle;
@@ -12,13 +13,29 @@ contract RaffleScript is Script {
 
     function run() public {
         HelperConfig helperConfig = new HelperConfig();
-        (address vrfConsumer, bytes32 gasLane, uint256 subscriptionId, bool enableNativePament) =
-            helperConfig.activeNetworkConfig();
+        AddConsumer addConsumer = new AddConsumer();
+        HelperConfig.NetworkConfig memory config = helperConfig.getActiveNetworkConfig();
 
+
+        if (config.subscriptionId == 0) {
+            CreateSubscription createSubscription = new CreateSubscription();
+            (config.subscriptionId, config.vrfConsumer) =
+                createSubscription.createSubscription(config.vrfConsumer, config.account);
+
+            FundSubscription fundSubscription = new FundSubscription();
+            fundSubscription.fundSubscription(
+                config.vrfConsumer, config.subscriptionId, config.link, config.account
+            );
+
+            helperConfig.setSubId(config.subscriptionId);
+        }
         vm.startBroadcast();
 
-        raffle = new Raffle(0.02 ether, 10, vrfConsumer, gasLane, subscriptionId, 400000, enableNativePament);
+        raffle = new Raffle(0.02 ether, 10, config.vrfConsumer, config.gasLane, 
+            config.subscriptionId, 500000, config.enableNativePament);
 
         vm.stopBroadcast();
+
+        addConsumer.addConsumer(address(raffle), config.vrfConsumer, config.subscriptionId, config.account);
     }
 }

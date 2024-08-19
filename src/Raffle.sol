@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import {console} from "forge-std/Test.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
@@ -76,9 +77,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         emit RaffleEnter(msg.sender);
     }
 
-    function pickWinner() internal onlyOpenRaffle {
-        require(block.timestamp - s_lastTimeStamp >= i_interval, Raffle__WaitMoreTime());
-
+    function pickWinner() internal {
         s_raffleState = RaffleState.CALCULATING;
 
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
