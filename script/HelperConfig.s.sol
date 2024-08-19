@@ -28,7 +28,7 @@ contract HelperConfig is Script {
 
     function getSepoliaEthConfig() public {
         activeNetworkConfig = NetworkConfig({
-            vrfConsumer: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
+            vrfConsumer: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             subscriptionId: 1891803289019707765347684558205062602228512876010731446449204100914846132809,
             enableNativePament: false,

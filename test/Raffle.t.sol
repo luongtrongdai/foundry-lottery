@@ -28,7 +28,7 @@ contract RaffleTest is Test {
         raffle.enterRaffle();
 
         vm.expectRevert();
-        raffle.enterRaffle{value: 0.01 ether}();
+        raffle.enterRaffle{value: 0.001 ether}();
     }
 
     function test_EnterRaffleSuccess() public {

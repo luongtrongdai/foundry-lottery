@@ -103,16 +103,12 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
-        uint256 totalEntranceFee = i_entranceFee * totalPlayers;
         uint256 currentBalance = address(this).balance;
 
         resetRaffle();
 
-        (bool success,) = recentWinner.call{value: currentBalance - totalEntranceFee}("");
+        (bool success,) = recentWinner.call{value: currentBalance}("");
         require(success, Raffle__TransferFailed());
-
-        (bool transferOwnerSuccess,) = s_owner.call{value: totalEntranceFee}("");
-        require(transferOwnerSuccess, Raffle__TransferFailed());
     }
 
     function checkUpkeep(bytes memory /* checkData */ )
