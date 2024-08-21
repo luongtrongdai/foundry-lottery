@@ -9,12 +9,13 @@ import {AddConsumer, CreateSubscription, FundSubscription} from "./Interaction.s
 contract RaffleScript is Script {
     Raffle public raffle;
 
+
     function setUp() public {}
 
-    function run() public {
+    function run() public returns(HelperConfig.NetworkConfig memory config) {
         HelperConfig helperConfig = new HelperConfig();
         AddConsumer addConsumer = new AddConsumer();
-        HelperConfig.NetworkConfig memory config = helperConfig.getActiveNetworkConfig();
+        config = helperConfig.getActiveNetworkConfig();
 
 
         if (config.subscriptionId == 0) {

@@ -100,7 +100,8 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
         uint256 totalPlayers = s_players.length;
         uint256 indexOfWinner = randomWords[0] % totalPlayers;
-
+        console.log(address(this));
+        console.log(indexOfWinner);
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
         uint256 currentBalance = address(this).balance;
@@ -149,5 +150,9 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     function getPlayer(uint256 index) public view returns (address) {
         return s_players[index];
+    }
+
+    function getLatestRequestId() public view returns(uint256) {
+        return s_latestRequestId;
     }
 }

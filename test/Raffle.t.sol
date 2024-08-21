@@ -6,21 +6,27 @@ pragma solidity 0.8.26;
 import {Test, console} from "forge-std/Test.sol";
 import {Raffle} from "src/Raffle.sol";
 import {RaffleScript} from "script/Raffle.s.sol";
+import {HelperConfig} from "script/HelperConfig.s.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 // 3. Interfaces, Libraries, Contracts
 
 contract RaffleTest is Test {
-    Raffle public raffle;
-    address USER = makeAddr("user");
     uint256 constant STARTING_BALANCE = 10 ether;
     uint256 constant GAS_PRICE = 1;
 
+    Raffle public raffle;
+    HelperConfig.NetworkConfig public networkConfig;
+    address USER = makeAddr("user");
+    address PLAYER = makeAddr("player");
+
     function setUp() external {
         RaffleScript raffleScript = new RaffleScript();
-        raffleScript.run();
+        (networkConfig) = raffleScript.run();
 
         raffle = raffleScript.raffle();
         vm.deal(USER, STARTING_BALANCE);
+        vm.deal(PLAYER, STARTING_BALANCE);
     }
 
     function test_EnterRaffleWithSmallETH() public {
@@ -54,13 +60,14 @@ contract RaffleTest is Test {
         assertEq(upkeepNeeded, true);
     }
 
-    function test_PerformUpKeepRevertWhenUnUpkeep() public {
+    function test_PerformUpKeepRevertWhenUpkeepFalse() public {
         vm.expectRevert();
 
         raffle.performUpkeep("");
     }
 
-    function test_PerformUpKeepWhenUpkeeped() public {
+    modifier performUpkeep() {
+        vm.prank(PLAYER);
         raffle.enterRaffle{value: 0.02 ether}();
 
         vm.prank(USER);
@@ -68,7 +75,17 @@ contract RaffleTest is Test {
 
         vm.warp(20);
         raffle.performUpkeep("");
+        _;
+    }
 
+    function test_PerformUpKeepWhenUpkeeped() public performUpkeep {         
         assert(raffle.getRaffleState() == Raffle.RaffleState.CALCULATING);
+    }
+
+    function test_fulfillRandomWordsRevertWhenNotPerformUpkeep() public performUpkeep {
+        VRFCoordinatorV2_5Mock(networkConfig.vrfConsumer).fulfillRandomWords(
+            raffle.getLatestRequestId(), address(raffle));
+
+        assert(raffle.getRaffleState() == Raffle.RaffleState.OPEN);
     }
 }
