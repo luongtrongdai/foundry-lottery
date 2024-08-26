@@ -20,6 +20,26 @@ contract RaffleTest is Test {
     address USER = makeAddr("user");
     address PLAYER = makeAddr("player");
 
+
+    modifier performUpkeep() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: 0.02 ether}();
+
+        vm.prank(USER);
+        raffle.enterRaffle{value: 0.03 ether}();
+
+        vm.warp(raffle.getLastTimeStamp() + raffle.getInterval());
+        raffle.performUpkeep("");
+        _;
+    }
+
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        }
+        _;
+    }
+
     function setUp() external {
         RaffleScript raffleScript = new RaffleScript();
         (networkConfig) = raffleScript.run();
@@ -54,7 +74,7 @@ contract RaffleTest is Test {
     function test_CheckUpkeepPass() public {
         raffle.enterRaffle{value: 0.02 ether}();
 
-        vm.warp(20);
+        vm.warp(raffle.getLastTimeStamp() + raffle.getInterval());
         (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         assertEq(upkeepNeeded, true);
@@ -66,23 +86,11 @@ contract RaffleTest is Test {
         raffle.performUpkeep("");
     }
 
-    modifier performUpkeep() {
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: 0.02 ether}();
-
-        vm.prank(USER);
-        raffle.enterRaffle{value: 0.03 ether}();
-
-        vm.warp(20);
-        raffle.performUpkeep("");
-        _;
-    }
-
     function test_PerformUpKeepWhenUpkeeped() public performUpkeep {         
         assert(raffle.getRaffleState() == Raffle.RaffleState.CALCULATING);
     }
 
-    function test_fulfillRandomWordsRevertWhenNotPerformUpkeep() public performUpkeep {
+    function test_fulfillRandomWordsRevertWhenPerformUpkeep() public performUpkeep skipFork {
         VRFCoordinatorV2_5Mock(networkConfig.vrfConsumer).fulfillRandomWords(
             raffle.getLatestRequestId(), address(raffle));
 

@@ -30,7 +30,7 @@ contract RaffleScript is Script {
 
             helperConfig.setSubId(config.subscriptionId);
         }
-        vm.startBroadcast();
+        vm.startBroadcast(config.account);
 
         raffle = new Raffle(0.002 ether, 10, config.vrfConsumer, config.gasLane, 
             config.subscriptionId, 500000, config.enableNativePament);

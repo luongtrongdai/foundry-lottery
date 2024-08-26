@@ -95,6 +95,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+        console.log("enter fulfillRandomWords");
         require(s_raffleState == RaffleState.CALCULATING, Raffle__RaffleNotCaculating());
         require(requestId == s_latestRequestId, Raffle__RaffleNotCaculating());
 
@@ -118,6 +119,9 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         override
         returns (bool upkeepNeeded, bytes memory /* performData */ )
     {
+        console.log("block.timestamp: ",block.timestamp);
+        console.log("s_lastTimeStamp: ",s_lastTimeStamp);
+
         upkeepNeeded = block.timestamp - s_lastTimeStamp >= i_interval;
         if (upkeepNeeded) {
             upkeepNeeded = s_raffleState == RaffleState.OPEN;
@@ -140,6 +144,10 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         s_lastTimeStamp = block.timestamp;
     }
 
+    function getLastTimeStamp() external view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
     }
@@ -154,5 +162,9 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     function getLatestRequestId() public view returns(uint256) {
         return s_latestRequestId;
+    }
+
+    function getInterval() external view returns (uint256) {
+        return i_interval;
     }
 }
